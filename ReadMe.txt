@@ -1,3 +1,8 @@
+Environment : Hugging Face, Google Colab.
+Language: Python 3.
+
+Folder Structure:
+
 ekman_mapping.json: used for mapping dataset emotion based on 
 ekman emotion classification. The file was uploaded Google Drive and imported
 from Drive to Google Colab.
