@@ -1,5 +1,5 @@
 Environment : Hugging Face, Google Colab.
-Language: Python 3.
+Language: Python 3, APEX.
 
 Folder Structure:
 
