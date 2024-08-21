@@ -1,0 +1,116 @@
+public class SentimentAnalysisUtil {
+
+    // Define your specific API endpoint and token
+    private static final String API_ENDPOINT = 'https://b76gqgdtrr2hmeox.eu-west-1.aws.endpoints.huggingface.cloud';
+    private static final String API_TOKEN = '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';
+
+    // Mapping labels from the model to actual emotion names
+    private static final Map<String, String> LABEL_MAP = new Map<String, String>{
+        'LABEL_0' => 'anger',
+        'LABEL_1' => 'disgust',
+        'LABEL_2' => 'fear',
+        'LABEL_3' => 'joy',
+        'LABEL_4' => 'sadness',
+        'LABEL_5' => 'surprise'
+    };
+
+    public String getEmotion(String feedbackText) {
+    String emotion = 'Unknown';
+    HttpRequest req = new HttpRequest();
+    req.setEndpoint(API_ENDPOINT);
+    req.setMethod('POST');
+    req.setHeader('Authorization', 'Bearer ' + API_TOKEN);
+    req.setHeader('Content-Type', 'application/json');
+    req.setHeader('Accept', 'application/json'); // Set the correct Accept header
+    
+    // Create JSON request body
+    String requestBody = '{"inputs": "' + feedbackText + '"}';
+    System.debug('Request body: ' + requestBody);
+    req.setBody(requestBody);
+
+    // Send HTTP request
+    Http http = new Http();
+    try {
+        HttpResponse res = http.send(req);
+        System.debug('Request sent');
+        System.debug('Response: ' + res.getBody()); // Log the full response for debugging
+
+        if (res.getStatusCode() == 200) {
+            // Process the response to extract the label and score
+            List<Object> responseList = (List<Object>) JSON.deserializeUntyped(res.getBody());
+            if (!responseList.isEmpty()) {
+                Map<String, Object> responseMap = (Map<String, Object>) responseList.get(0); // Use get(0) instead of [0]
+                System.debug('Response Map: ' + responseMap);
+                
+                if (responseMap.containsKey('label')) {
+                    String label = (String) responseMap.get('label');
+                    System.debug('Label received: ' + label);
+                    if (LABEL_MAP.containsKey(label)) {  // Check if the label exists in LABEL_MAP
+                        emotion = LABEL_MAP.get(label);
+                        System.debug('Mapped emotion: ' + emotion);
+                    } else {
+                        System.debug('Label not found in LABEL_MAP: ' + label);
+                    }
+                } else {
+                    System.debug('Response map does not contain a "label" key');
+                }
+            } else {
+                System.debug('Response list is empty');
+            }
+        } else {
+            System.debug('Failed with status code: ' + res.getStatusCode());
+        }
+    } catch (Exception e) {
+        System.debug('Error calling Hugging Face API: ' + e.getMessage());
+    }
+    System.debug('Final emotion: ' + emotion);
+    return emotion;
+}
+
+    public void sendEmotionEmail(String email, String emotion) {
+        if (email != null && email.contains('@')) {
+            String subject = 'Your Feedback Emotion Analysis';
+            String body = '';
+
+            // Create email body based on the emotion detected
+            switch on emotion {
+                when 'anger' {
+                    body = 'Thank you for your feedback. We noticed that your feedback expressed anger. We are sorry for any inconvenience and are here to help!';
+                }
+                when 'disgust' {
+                    body = 'Thank you for your feedback. We noticed that your feedback expressed disgust. We value your opinion and will work to improve!';
+                }
+                when 'fear' {
+                    body = 'Thank you for your feedback. We noticed that your feedback expressed fear. Please let us know how we can assist you!';
+                }
+                when 'joy' {
+                    body = 'Thank you for your feedback. We noticed that your feedback expressed joy. We are glad you had a positive experience!';
+                }
+                when 'sadness' {
+                    body = 'Thank you for your feedback. We noticed that your feedback expressed sadness. We are here to support you!';
+                }
+                when 'surprise' {
+                    body = 'Thank you for your feedback. We noticed that your feedback expressed surprise. We hope to continue surprising you in positive ways!';
+                }
+                when else {
+                    body = 'Thank you for your feedback. We appreciate your input!';
+                }
+            }
+
+            // Send email
+            Messaging.SingleEmailMessage emailMessage = new Messaging.SingleEmailMessage();
+            emailMessage.setToAddresses(new String[] { email });
+            emailMessage.setSubject(subject);
+            emailMessage.setPlainTextBody(body);
+            Messaging.sendEmail(new Messaging.SingleEmailMessage[] { emailMessage });
+        }
+    }
+    
+    public String stripHtmlTags(String html) {
+        if (String.isNotEmpty(html)) {
+            // Regular expression to remove HTML tags
+            return html.replaceAll('<[^>]*>', '');
+        }
+        return html;
+    }
+}
