@@ -12,8 +12,8 @@ from Drive to Google Colab.
 
 ResearchProjectCode.ipynb: has Google Colab notebook codes.
 
-SentimentAnalysisUtil.apxc: used in Salesforce configuration to create functionality.
+SentimentAnalysisUtil.apxc: used in Salesforce to create functionality.
 
-SentimentEmailFlowController.apxc: used in Salesforce configuration to execute flow.
+SentimentEmailFlowController.apxc: used in Salesforce to execute flow.
 
 You can reach trained model and its API using the link: https://huggingface.co/barx2os
